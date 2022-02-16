@@ -15,16 +15,23 @@ import java.util.Iterator;
 
 public class Server {
 	
-	static int running = 3;
+	static boolean running = true;
 	static ArrayList<SocketChannel> sockets = new ArrayList<SocketChannel>();
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		ServerSocketChannel server = ServerSocketChannel.open();
+		server.bind(new InetSocketAddress(35000));
+		server.configureBlocking(false);
+			
+		new MyServerThread(sockets).start();
 		
 		while (true) {
+			if ( !running)
+				break;
 			SocketChannel client = server.accept();
-			client.configureBlocking(false);
-			sockets.add(client);
+			if (client != null)
+				sockets.add(client);
+			java.lang.Thread.sleep(100);
 		}
 		
 		/*
