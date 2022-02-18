@@ -29,8 +29,10 @@ public class Server {
 			if ( !running)
 				break;
 			SocketChannel client = server.accept();
-			if (client != null)
+			if (client != null) {
+				client.configureBlocking(false);
 				sockets.add(client);
+			}
 			java.lang.Thread.sleep(100);
 		}
 		

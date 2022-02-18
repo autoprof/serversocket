@@ -23,9 +23,13 @@ public class MyServerThread extends Thread {
 		this.als = als;
 	}
 	
-	private void broadcast(ByteBuffer msg) throws IOException {
-		for(int i = 0; i < als.size(); i++)
-			als.get(i).write(msg);
+	private void broadcast(ByteBuffer msg, SocketChannel s) throws IOException {
+		System.out.println("Nombre de clients : " + als.size());
+		for(int i = 0; i < als.size(); i++) {
+			msg.rewind();
+			if ( s != als.get(i) )
+				als.get(i).write(msg);
+		}
 	}
 	
 	public void run() {
@@ -33,6 +37,7 @@ public class MyServerThread extends Thread {
 		ByteBuffer b;
 		try {
 			while(true) {
+				System.out.println("Loop !");
 				for (int i = 0; i < als.size(); i++) {
 					s = als.get(i);
 					b = buffers.get(s);
@@ -40,15 +45,22 @@ public class MyServerThread extends Thread {
 						b = ByteBuffer.allocate(1024);
 						buffers.put(s, b);
 					}
-					s.read(b);
+					System.out.println("Reading...");
+					int length = s.read(b);
+					System.out.println("Read " + length + " bytes");
 				}
 				
-				Iterator<ByteBuffer> messages = buffers.values().iterator();
-				while(messages.hasNext()) {
-					ByteBuffer msg = messages.next();
+				Iterator<SocketChannel> sockets = buffers.keySet().iterator();
+				int i = 0;
+				while(sockets.hasNext()) {
+					i++;
+					System.out.println("Send buffer : " + i);
+					SocketChannel key = sockets.next();
+					ByteBuffer msg = buffers.get(key);
 					if (new String(msg.array()).contains("\n")) {
-						broadcast(msg);
-						msg.clear();
+						broadcast(msg, key);
+						//msg.clear();
+						buffers.put(key, ByteBuffer.allocate(1024));
 					}
 				}
 				java.lang.Thread.sleep(100);
